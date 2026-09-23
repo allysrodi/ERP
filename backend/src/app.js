@@ -1,0 +1,61 @@
+import cors from 'cors';
+import express from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
+import { env } from './config/env.js';
+import { errorHandler, notFoundHandler } from './middleware/errorHandler.js';
+import healthRouter from './routes/health.routes.js';
+import systemRouter from './routes/system.routes.js';
+import authRouter from './modules/auth/auth.routes.js';
+import companyRouter from './modules/companies/company.routes.js';
+import customerRouter from './modules/customers/customer.routes.js';
+import supplierRouter from './modules/suppliers/supplier.routes.js';
+import categoryRouter from './modules/categories/category.routes.js';
+import productRouter from './modules/products/product.routes.js';
+import warehouseRouter from './modules/warehouses/warehouse.routes.js';
+import inventoryRouter from './modules/inventory/inventory.routes.js';
+import saleRouter from './modules/sales/sale.routes.js';
+import purchaseRouter from './modules/purchases/purchase.routes.js';
+import financeRouter from './modules/finance/finance.routes.js';
+import hrRouter from './modules/hr/hr.routes.js';
+import crmRouter from './modules/crm/crm.routes.js';
+import projectRouter from './modules/projects/project.routes.js';
+import notificationRouter from './modules/notifications/notification.routes.js';
+import auditRouter from './modules/audit/audit.routes.js';
+import dashboardRouter from './routes/dashboard.routes.js';
+import reportsRouter from './routes/reports.routes.js';
+
+export const app = express();
+
+app.disable('x-powered-by');
+app.use(helmet());
+app.use(cors({ origin: env.CLIENT_ORIGIN }));
+app.use(express.json({ limit: '1mb' }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
+
+app.get('/', (request, response) => {
+  response.json({ success: true, data: { name: 'ERP API', version: '0.1.0' }, message: 'API disponible' });
+});
+
+app.use('/api/health', healthRouter);
+app.use('/api/system', systemRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/companies', companyRouter);
+app.use('/api/customers', customerRouter);
+app.use('/api/suppliers', supplierRouter);
+app.use('/api/categories', categoryRouter);
+app.use('/api/products', productRouter);
+app.use('/api/warehouses', warehouseRouter);
+app.use('/api/inventory', inventoryRouter);
+app.use('/api/sales', saleRouter);
+app.use('/api/purchases', purchaseRouter);
+app.use('/api/finance', financeRouter);
+app.use('/api/hr', hrRouter);
+app.use('/api/crm', crmRouter);
+app.use('/api/projects', projectRouter);
+app.use('/api/notifications', notificationRouter);
+app.use('/api/audit', auditRouter);
+app.use('/api/dashboard', dashboardRouter);
+app.use('/api/reports', reportsRouter);
+app.use(notFoundHandler);
+app.use(errorHandler);

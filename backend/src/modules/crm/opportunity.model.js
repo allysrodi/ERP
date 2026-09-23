@@ -1,0 +1,3 @@
+import mongoose from 'mongoose';
+const opportunitySchema = new mongoose.Schema({ companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true, index: true }, leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead' }, name: { type: String, required: true, trim: true }, amount: { type: Number, min: 0, default: 0 }, stage: { type: String, enum: ['OPEN', 'WON', 'LOST'], default: 'OPEN', index: true }, expectedCloseDate: Date, ownerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true } }, { timestamps: true });
+export const Opportunity = mongoose.models.Opportunity ?? mongoose.model('Opportunity', opportunitySchema, 'opportunities');

@@ -1,0 +1,3 @@
+import mongoose from 'mongoose';
+const taskSchema = new mongoose.Schema({ companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true, index: true }, projectId: { type: mongoose.Schema.Types.ObjectId, ref: 'Project', required: true, index: true }, title: { type: String, required: true, trim: true }, description: String, assigneeId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }, dueDate: Date, status: { type: String, enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], default: 'PENDING' }, priority: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH'], default: 'MEDIUM' } }, { timestamps: true });
+export const Task = mongoose.models.Task ?? mongoose.model('Task', taskSchema, 'tasks');

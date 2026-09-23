@@ -1,0 +1,3 @@
+import mongoose from 'mongoose';
+const projectSchema = new mongoose.Schema({ companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company', required: true, index: true }, name: { type: String, required: true, trim: true }, description: String, responsibleId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }, startDate: Date, dueDate: Date, status: { type: String, enum: ['PENDING', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'], default: 'PENDING', index: true }, priority: { type: String, enum: ['LOW', 'MEDIUM', 'HIGH'], default: 'MEDIUM' }, progress: { type: Number, min: 0, max: 100, default: 0 } }, { timestamps: true });
+export const Project = mongoose.models.Project ?? mongoose.model('Project', projectSchema, 'projects');

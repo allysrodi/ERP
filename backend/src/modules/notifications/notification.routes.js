@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { asyncHandler } from '../../middleware/asyncHandler.js';
+import { requireAuth } from '../../middleware/auth.js';
+import { validate } from '../../middleware/validate.js';
+import { Notification } from './notification.model.js';
+import { ensureDatabaseConnection } from '../../utils/databaseGuard.js';
+const query = z.object({ companyId: z.string().regex(/^[a-f\d]{24}$/i), page: z.coerce.number().int().positive().default(1), limit: z.coerce.number().int().positive().max(100).default(20) });
+const router = Router(); router.use(requireAuth);
+router.get('/', validate(query, 'query'), asyncHandler(async (req, res) => { ensureDatabaseConnection(); const { companyId, page, limit } = req.query; const items = await Notification.find({ companyId, userId: req.auth.userId }).sort({ createdAt: -1 }).skip((page - 1) * limit).limit(limit).lean(); res.json({ success: true, data: items, message: 'Notificaciones obtenidas correctamente' }); }));
+router.patch('/:id/read', asyncHandler(async (req, res) => { ensureDatabaseConnection(); const item = await Notification.findOneAndUpdate({ _id: req.params.id, userId: req.auth.userId }, { readAt: new Date() }, { new: true }).lean(); res.json({ success: true, data: item, message: 'Notificacion marcada como leida' }); }));
+export default router;

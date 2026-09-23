@@ -1,0 +1,16 @@
+{
+  "expo": {
+    "name": "ERP Modular",
+    "slug": "erp-modular",
+    "version": "0.1.0",
+    "orientation": "default",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "android": {
+      "package": "com.erpmodular.app"
+    }
+  }
+}

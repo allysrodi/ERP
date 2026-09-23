@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { asyncHandler } from '../middleware/asyncHandler.js';
+import { requireAuth, requirePermission } from '../middleware/auth.js';
+import { validate } from '../middleware/validate.js';
+import { ACTIONS } from '../modules/auth/permissions.js';
+import { Sale } from '../modules/sales/sale.model.js';
+import { Purchase } from '../modules/purchases/purchase.model.js';
+import { ensureDatabaseConnection } from '../utils/databaseGuard.js';
+const query = z.object({ companyId: z.string().regex(/^[a-f\d]{24}$/i), from: z.coerce.date().optional(), to: z.coerce.date().optional() });
+const router = Router(); router.use(requireAuth, requirePermission(ACTIONS.VIEW));
+router.get('/sales', validate(query, 'query'), asyncHandler(async (req, res) => { ensureDatabaseConnection(); const { companyId, from, to } = req.query; const createdAt = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) }; const items = await Sale.find({ companyId, ...(Object.keys(createdAt).length ? { createdAt } : {}) }).sort({ createdAt: -1 }).lean(); res.json({ success: true, data: items, message: 'Reporte de ventas obtenido correctamente' }); }));
+router.get('/purchases', validate(query, 'query'), asyncHandler(async (req, res) => { ensureDatabaseConnection(); const { companyId, from, to } = req.query; const createdAt = { ...(from ? { $gte: from } : {}), ...(to ? { $lte: to } : {}) }; const items = await Purchase.find({ companyId, ...(Object.keys(createdAt).length ? { createdAt } : {}) }).sort({ createdAt: -1 }).lean(); res.json({ success: true, data: items, message: 'Reporte de compras obtenido correctamente' }); }));
+export default router;

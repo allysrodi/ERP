@@ -1,0 +1,12 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { asyncHandler } from '../../middleware/asyncHandler.js';
+import { requireAuth, requirePermission } from '../../middleware/auth.js';
+import { validate } from '../../middleware/validate.js';
+import { ACTIONS } from '../auth/permissions.js';
+import { AuditLog } from './audit.model.js';
+import { ensureDatabaseConnection } from '../../utils/databaseGuard.js';
+const query = z.object({ companyId: z.string().regex(/^[a-f\d]{24}$/i), module: z.string().optional(), page: z.coerce.number().int().positive().default(1), limit: z.coerce.number().int().positive().max(100).default(20) });
+const router = Router(); router.use(requireAuth, requirePermission(ACTIONS.VIEW));
+router.get('/', validate(query, 'query'), asyncHandler(async (req, res) => { ensureDatabaseConnection(); const { companyId, module, page, limit } = req.query; const items = await AuditLog.find({ companyId, ...(module ? { module } : {}) }).sort({ timestamp: -1 }).skip((page - 1) * limit).limit(limit).populate('userId', 'name lastName email').lean(); res.json({ success: true, data: items, message: 'Auditoria obtenida correctamente' }); }));
+export default router;
