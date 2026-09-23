@@ -1,7 +1,10 @@
 import dotenv from 'dotenv';
+import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
-dotenv.config();
+const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
+dotenv.config({ path: resolve(projectRoot, '.env') });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -20,3 +23,4 @@ if (!parsedEnv.success) {
 }
 
 export const env = parsedEnv.data;
+export const clientOrigins = env.CLIENT_ORIGIN.split(',').map((origin) => origin.trim()).filter(Boolean);

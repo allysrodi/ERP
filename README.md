@@ -1,169 +1,120 @@
 # ERP Modular
 
-Base de la Fase 1 para un ERP multiempresa y multisucursal.
+ERP multiempresa y multisucursal con React Native/Web, Node.js, Express, Mongoose y MongoDB Atlas.
 
 ## Arquitectura
 
-- `frontend/`: Expo + React Native + React Native Web.
-- `backend/`: Node.js + Express + API REST.
-- MongoDB Atlas se consume exclusivamente desde el backend mediante Mongoose.
-- La comunicación frontend-backend usa JSON y una URL configurable por entorno.
+- `frontend/`: aplicación Expo para React Native y React Native Web.
+- `backend/`: API REST Express con módulos, validaciones, permisos y servicios.
+- `MongoDB Atlas`: persistencia accesible exclusivamente desde el backend.
+- Flujo: `frontend -> REST/JSON -> backend -> Mongoose -> MongoDB`.
 
 ## Requisitos
 
 - Node.js 24+
 - npm 11+
-- Una URI de MongoDB Atlas para habilitar persistencia
+- MongoDB Atlas o MongoDB compatible con transacciones
 
-## Instalación
+## Configuración
+
+El backend carga el archivo `.env` de la raíz del repositorio. Copia `.env.example` a `.env` y configura tus valores locales. Nunca subas `.env` ni credenciales.
+
+```env
+NODE_ENV=development
+PORT=4000
+CLIENT_ORIGIN=http://localhost:8081,http://localhost:8082
+MONGODB_URI=mongodb+srv://<usuario>:<password>@<cluster>/<base_de_datos>
+AUTH_JWT_SECRET=<secreto_de_al_menos_32_caracteres>
+AUTH_JWT_EXPIRES_IN=1h
+EXPO_PUBLIC_API_URL=http://localhost:4000/api
+EXPO_PUBLIC_COMPANY_ID=<empresa-demo>
+```
+
+`CLIENT_ORIGIN` admite varios orígenes separados por comas.
+
+## Instalación y ejecución
 
 ```bash
 npm install
-copy .env.example .env
-```
-
-En macOS/Linux, usa `cp .env.example .env`. Edita `.env` y reemplaza `MONGODB_URI` con una credencial de Atlas. No guardes ese archivo en Git.
-
-## Ejecución
-
-Terminal 1:
-
-```bash
 npm run dev:backend
-```
-
-Terminal 2:
-
-```bash
 npm run web
 ```
 
 - API: `http://localhost:4000`
-- Salud de API: `http://localhost:4000/api/health`
-- Frontend web: URL mostrada por Expo, normalmente `http://localhost:8081`
-
-Si `MONGODB_URI` no está configurada, el backend puede arrancar para validar la API, pero el estado de base de datos aparecerá como pendiente de configuración.
+- Health: `http://localhost:4000/api/health`
+- Readiness: `http://localhost:4000/api/health/ready`
+- Web: URL mostrada por Expo
 
 ## Pruebas
 
 ```bash
 npm test --workspace backend
+npm exec --workspace frontend expo export -- --platform web
 ```
 
-## Fases 9 a 17
+## Fases
 
-También se prepararon compras, finanzas, RRHH, CRM, proyectos, notificaciones, auditoría, dashboard y reportes iniciales. Estas capas usan los modelos existentes y mantienen autenticación, validación y aislamiento por empresa.
+1. Arquitectura y configuración.
+2. Backend base y conexión Mongoose.
+3. Autenticación, usuarios, roles y permisos.
+4. Empresas y sucursales.
+5. Clientes y proveedores.
+6. Productos y categorías.
+7. Almacenes e inventario.
+8. Ventas.
+9. Compras.
+10. Finanzas.
+11. Dashboard.
+12. Recursos humanos.
+13. CRM.
+14. Proyectos y tareas.
+15. Reportes.
+16. Notificaciones.
+17. Auditoría.
+18. Seguridad avanzada inicial.
+19. Consolidación del núcleo.
 
-Rutas agregadas:
+## Módulos actuales
 
-- `/api/purchases`
-- `/api/finance`
-- `/api/hr`
-- `/api/crm`
-- `/api/projects`
-- `/api/notifications`
-- `/api/audit`
-- `/api/dashboard`
-- `/api/reports`
+La API contiene autenticación, empresas, clientes, proveedores, productos, categorías, almacenes, inventario, ventas, compras, finanzas, RRHH, CRM, proyectos, notificaciones, auditoría, dashboard y reportes.
 
-La Fase 18 agrega rate limiting específico al login y manejo seguro de cuerpos JSON inválidos. El cliente frontend incluye login, navegación, cierre de sesión y consultas iniciales de clientes, proveedores y productos.
+La interfaz web/móvil incluye login, navegación, consultas y operaciones CRUD iniciales para clientes, proveedores y productos.
 
-Las pantallas de clientes, proveedores y productos incluyen formularios de alta reutilizables, estados de guardado, errores y actualización del listado después de crear un registro.
+## Estructura
 
-También incluyen edición y desactivación lógica desde cada registro, con confirmación visual del resultado y envío del `companyId` requerido por la API.
+```text
+backend/
+  src/
+    config/
+    middleware/
+    modules/
+    routes/
+    utils/
+frontend/
+  src/
+    components/
+    context/
+    navigation/
+    screens/
+    services/
+docs/
+```
 
-## Estado de la Fase 8
+`frontend/App.js` es la entrada de la aplicación. El `App.js` de la raíz es únicamente un shim de compatibilidad para Expo cuando Metro resuelve el workspace desde la raíz.
 
-Se implementó el flujo inicial de ventas: cliente, productos, cálculo de subtotal/impuestos/descuento/total, estados, confirmación, salida de inventario, ingreso financiero y auditoría.
+## Seguridad
 
-Endpoints:
+- `.env` está excluido por Git.
+- Contraseñas con bcrypt.
+- Tokens JWT con expiración.
+- Validación Zod.
+- Helmet, CORS configurable, rate limiting y límites de payload.
+- Permisos validados en backend.
+- Auditoría y movimientos de inventario.
+- No se deben compartir ni reutilizar credenciales expuestas.
 
-- `GET/POST /api/sales`
-- `GET /api/sales/:id?companyId=<id>`
-- `PUT /api/sales/:id/status?companyId=<id>`
+## Documentación
 
-La confirmación usa el servicio de inventario y crea un ingreso y una auditoría relacionados.
+La documentación detallada de fases y API está en `docs/`.
 
-## Estado de la Fase 7
-
-Se implementaron almacenes e inventario. El inventario se separa por producto y almacén; cada cambio registra un documento en `inventory_movements`. Entradas y salidas actualizan el stock agregado del producto, mientras las transferencias mueven existencias entre almacenes sin alterar el total global.
-
-Endpoints:
-
-- `GET/POST /api/warehouses`
-- `GET/PUT/DELETE /api/warehouses/:id?companyId=<id>`
-- `GET /api/inventory`
-- `GET /api/inventory/movements`
-- `POST /api/inventory/movement`
-
-Tipos soportados: `PURCHASE`, `SALE`, `ADJUSTMENT`, `TRANSFER`, `RETURN`.
-
-## Estado de la Fase 6
-
-Se implementaron productos y categorías. Los productos son la fuente única de SKU, precios, unidad y existencia inicial; las categorías se relacionan mediante `categoryId`. Ambos módulos usan `companyId`, validan referencias activas y soportan búsqueda, filtros y paginación.
-
-Endpoints:
-
-- `GET/POST /api/categories`
-- `GET/PUT/DELETE /api/categories/:id?companyId=<id>`
-- `GET/POST /api/products`
-- `GET/PUT/DELETE /api/products/:id?companyId=<id>`
-
-Los productos permiten filtrar por categoría, estado, texto y `lowStock=true`.
-
-## Estado de la Fase 5
-
-Se implementaron los módulos de clientes y proveedores. Ambos usan `companyId`, filtros por texto/estado, paginación, desactivación lógica y permisos backend. Clientes usa las acciones generales de ventas y proveedores las de compras.
-
-Endpoints:
-
-- `GET/POST /api/customers`
-- `GET/PUT/DELETE /api/customers/:id?companyId=<id>`
-- `GET/POST /api/suppliers`
-- `GET/PUT/DELETE /api/suppliers/:id?companyId=<id>`
-
-Las consultas requieren `companyId`; aceptan `search`, `status`, `page` y `limit` cuando corresponde.
-
-## Estado de la Fase 4
-
-Se implementaron empresas y sucursales con referencias Mongoose, índices de búsqueda, desactivación lógica y rutas administrativas protegidas para `ADMIN` y `GERENTE`. Las sucursales toman su empresa desde el parámetro de ruta para evitar inconsistencias entre URL y cuerpo.
-
-Endpoints:
-
-- `GET /api/companies`
-- `POST /api/companies`
-- `GET /api/companies/:id`
-- `PUT /api/companies/:id`
-- `DELETE /api/companies/:id` (desactivación)
-- `GET /api/companies/:companyId/branches`
-- `POST /api/companies/:companyId/branches`
-- `PUT /api/companies/branches/:id`
-- `DELETE /api/companies/branches/:id` (desactivación)
-
-## Estado de la Fase 3
-
-Se implemento autenticacion JWT con usuarios Mongoose, contrasenas protegidas con `bcryptjs`, perfil autenticado y permisos derivados del rol. El registro publico siempre crea usuarios `EMPLEADO`; los roles privilegiados no se aceptan desde ese endpoint.
-
-Endpoints:
-
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me` con `Authorization: Bearer <token>`
-
-La autenticacion requiere `AUTH_JWT_SECRET` de al menos 32 caracteres y MongoDB conectada. Ningun secreto se incluye en el repositorio.
-
-## Estado de la Fase 2
-
-La Fase 2 agrega la capa base del backend: validacion con Zod, errores tipados, respuestas consistentes, manejadores asincronos y endpoints de liveness/readiness. MongoDB Atlas se conecta mediante Mongoose desde `backend/src/config/database.js`.
-
-Endpoints base:
-
-- `GET /api/health`: servicio activo; no requiere MongoDB.
-- `GET /api/health/ready`: servicio listo solo cuando MongoDB esta configurada y conectada.
-- `POST /api/system/echo`: endpoint tecnico para comprobar validacion y contrato REST.
-
-## Estado de la Fase 1
-
-Incluye configuración inicial, estructura modular, servidor Express, seguridad HTTP base, limitación de solicitudes, validación de entorno, conexión Mongoose opcional, endpoint de salud, frontend RN Web y prueba de comunicación frontend-backend.
-
-Los módulos de negocio se implementarán únicamente después de revisar y autorizar la siguiente fase.
+La Fase 19 consolida el núcleo sin agregar módulos de negocio nuevos.
