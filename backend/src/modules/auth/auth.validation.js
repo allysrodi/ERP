@@ -14,3 +14,6 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({ email, password });
+export const changePasswordSchema = z.object({ currentPassword: password, newPassword: password });
+export const forgotPasswordSchema = z.object({ email });
+export const resetPasswordSchema = z.object({ token: z.string().min(32).max(200), newPassword: password });

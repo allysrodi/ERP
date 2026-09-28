@@ -12,7 +12,11 @@ const userSchema = new mongoose.Schema({
   companyId: { type: mongoose.Schema.Types.ObjectId, ref: 'Company' },
   branchId: { type: mongoose.Schema.Types.ObjectId, ref: 'Branch' },
   status: { type: String, enum: ['ACTIVE', 'INACTIVE'], default: 'ACTIVE', index: true },
-  lastLoginAt: Date
+  lastLoginAt: Date,
+  failedLoginAttempts: { type: Number, default: 0 },
+  lockUntil: Date,
+  passwordResetTokenHash: String,
+  passwordResetExpiresAt: Date
 }, { timestamps: true });
 
 userSchema.pre('save', async function hashPassword(next) {

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Purchase } from './purchase.model.js';
 import { Supplier } from '../suppliers/supplier.model.js';
 import { Product } from '../products/product.model.js';
@@ -32,9 +33,14 @@ export async function receivePurchase(id, companyId, userId) {
   const purchase = await Purchase.findOne({ _id: id, companyId });
   if (!purchase) throw new AppError('Compra no encontrada', 404);
   if (purchase.status === 'RECEIVED' || purchase.status === 'CANCELLED') throw new AppError('La compra no puede recibirse en su estado actual', 409);
-  for (const item of purchase.items) await registerMovement({ companyId, productId: item.productId, warehouseId: item.warehouseId, type: 'PURCHASE', direction: 'IN', quantity: item.quantity, referenceId: purchase._id, reason: 'Compra recibida' }, userId);
-  await Expense.create({ companyId, purchaseId: purchase._id, concept: `Compra ${purchase._id}`, category: 'COMPRAS', amount: purchase.total, responsibleId: userId, status: 'PENDING' });
-  await AuditLog.create({ companyId, userId, action: 'RECEIVE', module: 'PURCHASES', recordId: purchase._id, changes: { status: 'RECEIVED' } });
-  purchase.status = 'RECEIVED'; purchase.receivedAt = new Date(); await purchase.save();
+  const session = await mongoose.startSession();
+  try {
+    await session.withTransaction(async () => {
+      for (const item of purchase.items) await registerMovement({ companyId, productId: item.productId, warehouseId: item.warehouseId, type: 'PURCHASE', direction: 'IN', quantity: item.quantity, referenceId: purchase._id, reason: 'Compra recibida' }, userId, session);
+      await Expense.create([{ companyId, purchaseId: purchase._id, concept: `Compra ${purchase._id}`, category: 'COMPRAS', amount: purchase.total, responsibleId: userId, status: 'PENDING' }], { session });
+      await AuditLog.create([{ companyId, userId, action: 'RECEIVE', module: 'PURCHASES', recordId: purchase._id, changes: { status: 'RECEIVED' } }], { session });
+      purchase.status = 'RECEIVED'; purchase.receivedAt = new Date(); await purchase.save({ session });
+    });
+  } finally { await session.endSession(); }
   return purchase.toObject();
 }

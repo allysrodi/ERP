@@ -42,27 +42,31 @@ function getDelta({ type, direction, quantity }) {
   return direction === 'OUT' ? -quantity : quantity;
 }
 
-export async function registerMovement(data, userId) {
+export async function registerMovement(data, userId, externalSession) {
   ensureDatabaseConnection();
   const { product } = await ensureProductAndWarehouse(data);
-  const session = await mongoose.startSession();
-  try {
+  const session = externalSession ?? await mongoose.startSession();
+  const applyMovement = async () => {
     let movement;
-    await session.withTransaction(async () => {
-      if (data.type === 'TRANSFER') {
-        await decreaseBalance({ ...data, userId, session });
-        await increaseBalance({ ...data, warehouseId: data.destinationWarehouseId, userId, session });
-      } else {
-        const delta = getDelta(data);
-        if (delta < 0) await decreaseBalance({ ...data, quantity: Math.abs(delta), userId, session });
-        else await increaseBalance({ ...data, quantity: delta, userId, session });
-        await Product.updateOne({ _id: product._id }, { $inc: { stock: delta } }, { session });
-      }
-      [movement] = await InventoryMovement.create([{ ...data, userId }], { session });
-    });
+    if (data.type === 'TRANSFER') {
+      await decreaseBalance({ ...data, userId, session });
+      await increaseBalance({ ...data, warehouseId: data.destinationWarehouseId, userId, session });
+    } else {
+      const delta = getDelta(data);
+      if (delta < 0) await decreaseBalance({ ...data, quantity: Math.abs(delta), userId, session });
+      else await increaseBalance({ ...data, quantity: delta, userId, session });
+      await Product.updateOne({ _id: product._id }, { $inc: { stock: delta } }, { session });
+    }
+    [movement] = await InventoryMovement.create([{ ...data, userId }], { session });
     return movement.toObject();
+  };
+  try {
+    if (externalSession) return await applyMovement();
+    let result;
+    await session.withTransaction(async () => { result = await applyMovement(); });
+    return result;
   } finally {
-    await session.endSession();
+    if (!externalSession) await session.endSession();
   }
 }
 

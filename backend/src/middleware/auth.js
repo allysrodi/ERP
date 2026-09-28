@@ -15,14 +15,29 @@ export function requireAuth(request, response, next) {
 
   try {
     const payload = jwt.verify(authorization.slice(7), env.AUTH_JWT_SECRET);
-    request.auth = {
+    const user = {
       userId: payload.sub,
       role: payload.role,
-      permissions: getPermissionsForRole(payload.role)
+      companyId: payload.companyId,
+      permissions: getPermissionsForRole(payload.role),
+      isGlobalAdmin: payload.role === 'ADMIN' && !payload.companyId
     };
+    request.user = user;
+    request.auth = user;
+    scopeCompany(request, user);
     return next();
   } catch {
     return next(new AppError('Token invalido o expirado', 401));
+  }
+}
+
+function scopeCompany(request, user) {
+  const requestedCompanyId = request.body?.companyId ?? request.query?.companyId ?? request.params?.companyId;
+  const companyId = user.isGlobalAdmin ? requestedCompanyId : user.companyId;
+  if (companyId) {
+    if (request.body) request.body.companyId = companyId;
+    if (request.query) request.query.companyId = companyId;
+    if (request.params?.companyId) request.params.companyId = companyId;
   }
 }
 

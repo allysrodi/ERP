@@ -11,6 +11,7 @@
     "install:all": "npm install",
     "dev:backend": "npm --workspace backend run dev",
     "start:backend": "npm --workspace backend start",
+    "seed": "npm --workspace backend run seed",
     "dev:frontend": "npm --workspace frontend run start",
     "web": "npm --workspace frontend run web",
     "test:backend": "npm --workspace backend test"

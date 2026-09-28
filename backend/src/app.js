@@ -24,6 +24,7 @@ import notificationRouter from './modules/notifications/notification.routes.js';
 import auditRouter from './modules/audit/audit.routes.js';
 import dashboardRouter from './routes/dashboard.routes.js';
 import reportsRouter from './routes/reports.routes.js';
+import { auditWrites } from './middleware/auditWrites.js';
 
 export const app = express();
 
@@ -31,6 +32,7 @@ app.disable('x-powered-by');
 app.use(helmet());
 app.use(cors({ origin: (origin, callback) => callback(null, !origin || clientOrigins.includes(origin)) }));
 app.use(express.json({ limit: '1mb' }));
+app.use(auditWrites);
 app.use(rateLimit({ windowMs: 15 * 60 * 1000, limit: 300 }));
 
 app.get('/', (request, response) => {

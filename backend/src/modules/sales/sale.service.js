@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { Sale } from './sale.model.js';
 import { Customer } from '../customers/customer.model.js';
 import { Product } from '../products/product.model.js';
@@ -52,12 +53,18 @@ export async function updateSaleStatus(id, companyId, status, userId) {
   if (!sale) throw new AppError('Venta no encontrada', 404);
   if (sale.status === 'CANCELLED' || sale.status === 'PAID') throw new AppError('La venta no puede modificarse en su estado actual', 409);
   if (status === 'CONFIRMED' && sale.status !== 'CONFIRMED') {
-    for (const item of sale.items) {
-      await registerMovement({ companyId, productId: item.productId, warehouseId: item.warehouseId, type: 'SALE', direction: 'OUT', quantity: item.quantity, referenceId: sale._id, reason: 'Venta confirmada' }, userId);
-    }
-    sale.confirmedAt = new Date();
-    await Income.create({ companyId, saleId: sale._id, concept: `Venta ${sale._id}`, amount: sale.total, paymentMethod: sale.paymentMethod, userId });
-    await AuditLog.create({ companyId, userId, action: 'CONFIRM', module: 'SALES', recordId: sale._id, changes: { status: 'CONFIRMED' } });
+    const session = await mongoose.startSession();
+    try {
+      await session.withTransaction(async () => {
+        for (const item of sale.items) await registerMovement({ companyId, productId: item.productId, warehouseId: item.warehouseId, type: 'SALE', direction: 'OUT', quantity: item.quantity, referenceId: sale._id, reason: 'Venta confirmada' }, userId, session);
+        sale.confirmedAt = new Date();
+        await Income.create([{ companyId, saleId: sale._id, concept: `Venta ${sale._id}`, amount: sale.total, paymentMethod: sale.paymentMethod, userId }], { session });
+        await AuditLog.create([{ companyId, userId, action: 'CONFIRM', module: 'SALES', recordId: sale._id, changes: { status: 'CONFIRMED' } }], { session });
+        sale.status = status;
+        await sale.save({ session });
+      });
+    } finally { await session.endSession(); }
+    return sale.toObject();
   }
   sale.status = status;
   await sale.save();
