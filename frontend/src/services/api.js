@@ -6,6 +6,10 @@ export function setAuthToken(token) {
   authToken = token;
 }
 
+export function clearAuthToken() {
+  authToken = null;
+}
+
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
     ...options,
