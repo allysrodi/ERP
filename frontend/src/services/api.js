@@ -1,4 +1,9 @@
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const configuredApiUrl = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:4000/api';
+const apiUrl = new URL(configuredApiUrl);
+if (!apiUrl.pathname.replace(/\/$/, '').endsWith('/api')) {
+  apiUrl.pathname = `${apiUrl.pathname.replace(/\/$/, '')}/api`;
+}
+const API_URL = apiUrl.toString().replace(/\/$/, '');
 
 let authToken = null;
 

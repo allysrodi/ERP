@@ -52,6 +52,14 @@ npm test --workspace backend
 npm exec --workspace frontend expo export -- --platform web
 ```
 
+## Despliegue en Render
+
+El archivo `render.yaml` crea la API (`erp-api`) y el sitio web estático (`erp-web`) desde el monorepo. En Render, crea un Blueprint conectado a este repositorio y selecciona la rama que contiene `render.yaml`.
+
+Durante la creación, proporciona `MONGODB_URI` con la conexión de MongoDB Atlas. Render genera `AUTH_JWT_SECRET` automáticamente y configura la URL pública de la API para el frontend. La API usa `https://erp-web.onrender.com` como origen permitido; si cambias el nombre del sitio o conectas un dominio propio, actualiza `CLIENT_ORIGIN` en el servicio `erp-api` con el origen exacto del frontend.
+
+Comprueba la API en `https://erp-api.onrender.com/api/health/ready`. El plan gratuito de Render puede suspender la API cuando está inactiva, por lo que la primera petición tras una pausa puede tardar.
+
 ## Fases
 
 1. Arquitectura y configuración.
