@@ -19,10 +19,14 @@ services:
   - type: web
     name: erp-web
     runtime: static
-    buildCommand: npm ci && npm exec --workspace frontend expo export -- --platform web
+    buildCommand: |
+      export API_BASE_URL="${API_BASE_URL:-https://erp-api.onrender.com}"
+      export EXPO_PUBLIC_API_URL="${API_BASE_URL}/api"
+      npm ci
+      npm exec --workspace frontend expo export -- --platform web
     staticPublishPath: frontend/dist
     envVars:
-      - key: EXPO_PUBLIC_API_URL
+      - key: API_BASE_URL
         fromService:
           type: web
           name: erp-api
