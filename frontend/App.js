@@ -28,6 +28,103 @@ function LoginScreen({ onLogin }) {
   </View></SafeAreaView>;
 }
 
+function ResetPasswordScreen({ token, onDone }) {
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    setError('');
+    setMessage('');
+
+    if (newPassword.length < 8) {
+      setError('La contraseña debe tener al menos 8 caracteres.');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setError('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await api.resetPassword(token, newPassword);
+      setMessage('Contraseña actualizada correctamente.');
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.authShell}>
+        <Text style={styles.eyebrow}>KIT-LI ERP</Text>
+
+        <Text style={styles.title}>
+          Crear nueva contraseña
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Ingresa una nueva contraseña para recuperar el acceso a tu cuenta.
+        </Text>
+
+        <TextInput
+          placeholder="Nueva contraseña"
+          placeholderTextColor="#82918f"
+          secureTextEntry
+          style={styles.input}
+          value={newPassword}
+          onChangeText={setNewPassword}
+        />
+
+        <TextInput
+          placeholder="Confirmar contraseña"
+          placeholderTextColor="#82918f"
+          secureTextEntry
+          style={styles.input}
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+        />
+
+        {error ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : null}
+
+        {message ? (
+          <Text style={styles.success}>{message}</Text>
+        ) : null}
+
+        {!message ? (
+          <Pressable
+            onPress={submit}
+            disabled={loading}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Actualizando...' : 'Restablecer contraseña'}
+            </Text>
+          </Pressable>
+        ) : (
+          <Pressable
+            onPress={onDone}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>
+              Ir a iniciar sesión
+            </Text>
+          </Pressable>
+        )}
+      </View>
+    </SafeAreaView>
+  );
+}
+
 function RecordsScreen({ moduleKey }) {
   const [records, setRecords] = useState([]);
   const [message, setMessage] = useState('Configura EXPO_PUBLIC_COMPANY_ID para consultar datos.');
@@ -88,8 +185,47 @@ function Workspace({ user, onLogout }) {
 
 export default function App() {
   const [user, setUser] = useState(null);
-  function logout() { clearAuthToken(); setUser(null); }
-  return user ? <Workspace user={user} onLogout={logout} /> : <LoginScreen onLogin={setUser} />;
+  const [resetToken, setResetToken] = useState(null);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+
+    if (
+      window.location.pathname === '/reset-password' &&
+      token
+    ) {
+      setResetToken(token);
+    }
+  }, []);
+
+  function logout() {
+    clearAuthToken();
+    setUser(null);
+  }
+
+  function finishPasswordReset() {
+    setResetToken(null);
+
+    if (typeof window !== 'undefined') {
+      window.history.replaceState({}, '', '/');
+    }
+  }
+
+  if (resetToken) {
+    return (
+      <ResetPasswordScreen
+        token={resetToken}
+        onDone={finishPasswordReset}
+      />
+    );
+  }
+
+  return user
+    ? <Workspace user={user} onLogout={logout} />
+    : <LoginScreen onLogin={setUser} />;
 }
 
 const styles = StyleSheet.create({
@@ -115,6 +251,11 @@ const styles = StyleSheet.create({
   primaryButton: { alignItems: 'center', backgroundColor: '#0f766e', borderRadius: 8, marginTop: 18, padding: 15 },
   primaryButtonText: { color: '#ffffff', fontWeight: '700' },
   error: { color: '#b42318', marginTop: 12 },
+  success: {
+  color: '#0f766e',
+  fontWeight: '700',
+  marginTop: 12
+},
   record: { backgroundColor: '#ffffff', borderColor: '#dce7e3', borderRadius: 8, borderWidth: 1, marginTop: 10, padding: 15 },
   recordTitle: { color: '#102a2a', fontSize: 16, fontWeight: '700' },
   recordMeta: { color: '#687a76', marginTop: 4 },

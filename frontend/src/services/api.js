@@ -32,6 +32,16 @@ export async function apiRequest(path, options = {}) {
 export const api = {
   health: () => apiRequest('/health'),
   login: (payload) => apiRequest('/auth/login', { method: 'POST', body: JSON.stringify(payload) }),
+  forgotPassword: (email) =>
+  apiRequest('/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ email })
+  }),
+  resetPassword: (token, newPassword) =>
+  apiRequest('/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, newPassword })
+  }),
   dashboard: (companyId) => apiRequest(`/dashboard?companyId=${encodeURIComponent(companyId)}`),
   products: (query) => apiRequest(`/products?${new URLSearchParams(query).toString()}`),
   customers: (query) => apiRequest(`/customers?${new URLSearchParams(query).toString()}`),
