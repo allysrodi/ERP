@@ -5,7 +5,7 @@ import { moduleCatalog } from './src/navigation/moduleCatalog';
 
 const companyId = process.env.EXPO_PUBLIC_COMPANY_ID;
 
-function LoginScreen({ onLogin }) {
+function LoginScreen({ onLogin, onForgotPassword }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +25,97 @@ function LoginScreen({ onLogin }) {
     <TextInput placeholder="Contrasena" placeholderTextColor="#82918f" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
     {error ? <Text style={styles.error}>{error}</Text> : null}
     <Pressable onPress={submit} style={styles.primaryButton}><Text style={styles.primaryButtonText}>{loading ? 'Accediendo...' : 'Iniciar sesion'}</Text></Pressable>
+    <Pressable
+  onPress={onForgotPassword}
+  style={styles.backButton}
+>
+  <Text style={styles.backButtonText}>
+    ¿Olvidaste tu contraseña?
+  </Text>
+</Pressable>
   </View></SafeAreaView>;
+}
+
+function ForgotPasswordScreen({ onBack }) {
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    if (!email.trim()) {
+      setError('Ingresa tu correo electrónico.');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      await api.forgotPassword(email.trim());
+
+      setMessage(
+        'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.'
+      );
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.authShell}>
+        <Text style={styles.eyebrow}>KIT-LI ERP</Text>
+
+        <Text style={styles.title}>
+          Recuperar contraseña
+        </Text>
+
+        <Text style={styles.subtitle}>
+          Ingresa el correo asociado a tu cuenta y te enviaremos un enlace de recuperación.
+        </Text>
+
+        <TextInput
+          autoCapitalize="none"
+          keyboardType="email-address"
+          placeholder="Correo electrónico"
+          placeholderTextColor="#82918f"
+          style={styles.input}
+          value={email}
+          onChangeText={setEmail}
+        />
+
+        {error ? (
+          <Text style={styles.error}>{error}</Text>
+        ) : null}
+
+        {message ? (
+          <Text style={styles.success}>{message}</Text>
+        ) : null}
+
+        {!message ? (
+          <Pressable
+            onPress={submit}
+            disabled={loading}
+            style={styles.primaryButton}
+          >
+            <Text style={styles.primaryButtonText}>
+              {loading ? 'Enviando...' : 'Enviar enlace'}
+            </Text>
+          </Pressable>
+        ) : null}
+
+        <Pressable onPress={onBack} style={styles.backButton}>
+          <Text style={styles.backButtonText}>
+            Volver a iniciar sesión
+          </Text>
+        </Pressable>
+      </View>
+    </SafeAreaView>
+  );
 }
 
 function ResetPasswordScreen({ token, onDone }) {
@@ -186,6 +276,7 @@ function Workspace({ user, onLogout }) {
 export default function App() {
   const [user, setUser] = useState(null);
   const [resetToken, setResetToken] = useState(null);
+  const [forgotPassword, setForgotPassword] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -223,12 +314,35 @@ export default function App() {
     );
   }
 
+  if (forgotPassword) {
+    return (
+      <ForgotPasswordScreen
+        onBack={() => setForgotPassword(false)}
+      />
+    );
+  }
+
   return user
     ? <Workspace user={user} onLogout={logout} />
-    : <LoginScreen onLogin={setUser} />;
+    : (
+        <LoginScreen
+          onLogin={setUser}
+          onForgotPassword={() => setForgotPassword(true)}
+        />
+      );
 }
 
 const styles = StyleSheet.create({
+  backButton: {
+  alignItems: 'center',
+  marginTop: 18,
+  padding: 10
+},
+
+backButtonText: {
+  color: '#0f766e',
+  fontWeight: '700'
+},
   safeArea: { flex: 1, backgroundColor: '#f5f7f5' },
   authShell: { alignSelf: 'center', justifyContent: 'center', maxWidth: 560, padding: 32, width: '100%' },
   workspace: { flex: 1, flexDirection: 'row' },
