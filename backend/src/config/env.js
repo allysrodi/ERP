@@ -12,7 +12,8 @@ const envSchema = z.object({
   CLIENT_ORIGIN: z.string().default('http://localhost:8081'),
   MONGODB_URI: z.string().min(1).optional(),
   AUTH_JWT_SECRET: z.string().min(32).optional(),
-  AUTH_JWT_EXPIRES_IN: z.string().default('1h')
+  AUTH_JWT_EXPIRES_IN: z.string().default('1h'),
+  RESEND_API_KEY: z.string().min(1).optional()
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

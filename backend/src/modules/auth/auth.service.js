@@ -5,6 +5,7 @@ import { AppError } from '../../utils/appError.js';
 import { ensureDatabaseConnection } from '../../utils/databaseGuard.js';
 import { User } from './user.model.js';
 import { getPermissionsForRole, ROLES } from './permissions.js';
+import { sendPasswordResetEmail } from '../../services/email.service.js';
 
 function ensureAuthConfiguration() {
   if (!env.AUTH_JWT_SECRET) {
@@ -66,12 +67,29 @@ export async function changePassword(userId, { currentPassword, newPassword }) {
 
 export async function requestPasswordReset(email) {
   ensureDatabaseConnection();
+
   const user = await User.findOne({ email });
+
+  // No revelamos si el correo existe o no.
   if (!user) return;
+
   const token = crypto.randomBytes(32).toString('hex');
-  user.passwordResetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
-  user.passwordResetExpiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+  user.passwordResetTokenHash = crypto
+    .createHash('sha256')
+    .update(token)
+    .digest('hex');
+
+  user.passwordResetExpiresAt = new Date(
+    Date.now() + 15 * 60 * 1000
+  );
+
   await user.save();
+
+  await sendPasswordResetEmail({
+    email: user.email,
+    token
+  });
 }
 
 export async function resetPassword({ token, newPassword }) {
