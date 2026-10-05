@@ -22,23 +22,25 @@ export function requireAuth(request, response, next) {
       permissions: getPermissionsForRole(payload.role),
       isGlobalAdmin: payload.role === 'ADMIN' && !payload.companyId
     };
+    if (!user.isGlobalAdmin && !user.companyId && request.baseUrl !== '/api/auth') {
+      throw new AppError('Tu cuenta necesita una empresa asignada', 403);
+    }
     request.user = user;
     request.auth = user;
     scopeCompany(request, user);
     return next();
-  } catch {
+  } catch (error) {
+    if (error instanceof AppError) return next(error);
     return next(new AppError('Token invalido o expirado', 401));
   }
 }
 
 function scopeCompany(request, user) {
-  const requestedCompanyId = request.body?.companyId ?? request.query?.companyId ?? request.params?.companyId;
-  const companyId = user.isGlobalAdmin ? requestedCompanyId : user.companyId;
-  if (companyId) {
-    if (request.body) request.body.companyId = companyId;
-    if (request.query) request.query.companyId = companyId;
-    if (request.params?.companyId) request.params.companyId = companyId;
+  const requested = [request.body?.companyId, request.query?.companyId, request.params?.companyId].filter(Boolean);
+  if (!user.isGlobalAdmin && requested.some((id) => String(id) !== String(user.companyId ?? ''))) {
+    throw new AppError('Empresa no autorizada', 403);
   }
+  request.companyScope = user.isGlobalAdmin ? undefined : user.companyId;
 }
 
 export function requireRole(...roles) {
@@ -52,7 +54,11 @@ export function requireRole(...roles) {
 
 export function requirePermission(permission) {
   return (request, response, next) => {
-    if (!request.auth?.permissions.includes(permission)) {
+    const allowedModules = { VENTAS: ['customers', 'sales', 'crm'], COMPRAS: ['suppliers', 'purchases'], ALMACEN: ['products', 'categories', 'warehouses', 'inventory'], FINANZAS: ['finance'], RRHH: ['hr'] };
+    const module = request.baseUrl?.split('/').filter(Boolean).at(-1);
+    const role = request.auth?.role;
+    const moduleAllowed = permission === 'VIEW' || ['ADMIN', 'GERENTE'].includes(role) || allowedModules[role]?.includes(module);
+    if (!moduleAllowed || !request.auth?.permissions.includes(permission)) {
       return next(new AppError('Permisos insuficientes', 403));
     }
     return next();

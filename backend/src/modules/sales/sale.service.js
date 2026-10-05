@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { validateSaleTransition } from './sale.transitions.js';
 import { Sale } from './sale.model.js';
 import { Customer } from '../customers/customer.model.js';
 import { Product } from '../products/product.model.js';
@@ -51,7 +52,8 @@ export async function updateSaleStatus(id, companyId, status, userId) {
   ensureDatabaseConnection();
   const sale = await Sale.findOne({ _id: id, companyId });
   if (!sale) throw new AppError('Venta no encontrada', 404);
-  if (sale.status === 'CANCELLED' || sale.status === 'PAID') throw new AppError('La venta no puede modificarse en su estado actual', 409);
+  validateSaleTransition(sale.status, status);
+  if (sale.status === status) return sale.toObject();
   if (status === 'CONFIRMED' && sale.status !== 'CONFIRMED') {
     const session = await mongoose.startSession();
     try {

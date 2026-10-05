@@ -2,7 +2,7 @@ import { sendSuccess } from '../../utils/apiResponse.js';
 import { createCompany, createBranch, deactivateBranch, deactivateCompany, getCompany, listBranches, listCompanies, updateBranch, updateCompany } from './company.service.js';
 
 export async function getCompanies(request, response) {
-  return sendSuccess(response, await listCompanies(), 'Empresas obtenidas correctamente');
+  return sendSuccess(response, await listCompanies(request.auth.isGlobalAdmin ? undefined : request.auth.companyId), 'Empresas obtenidas correctamente');
 }
 
 export async function getCompanyById(request, response) {

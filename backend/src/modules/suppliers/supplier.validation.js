@@ -8,7 +8,7 @@ export const supplierSchema = z.object({
   companyId: objectId,
   rfc: optionalText(13).transform((value) => value?.toUpperCase()),
   phone: optionalText(30),
-  email: z.string().trim().email().max(160).optional(),
+  email: z.string().trim().email().max(160).nullable().optional(),
   address: optionalText(300),
   contact: optionalText(160)
 });

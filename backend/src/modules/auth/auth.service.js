@@ -68,6 +68,7 @@ export async function changePassword(userId, { currentPassword, newPassword }) {
 export async function requestPasswordReset(email) {
   ensureDatabaseConnection();
 
+  if (!env.RESEND_API_KEY) throw new AppError('Recuperacion por correo no configurada', 503);
   const user = await User.findOne({ email });
 
   // No revelamos si el correo existe o no.
