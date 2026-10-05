@@ -167,3 +167,31 @@ Endpoints base:
 Incluye configuración inicial, estructura modular, servidor Express, seguridad HTTP base, limitación de solicitudes, validación de entorno, conexión Mongoose opcional, endpoint de salud, frontend RN Web y prueba de comunicación frontend-backend.
 
 Los módulos de negocio se implementarán únicamente después de revisar y autorizar la siguiente fase.
+
+## Configuración de entornos (web y Android)
+
+Desde la raíz instala con `npm ci`. Copia `backend/.env.example` a
+`backend/.env` y `frontend/.env.example` a `frontend/.env`. En Windows usa
+`copy`; en Linux/macOS usa `cp`. El backend carga primero su archivo y después
+el `.env` raíz como respaldo; las variables del proceso tienen prioridad.
+Expo carga las variables públicas desde `frontend/.env`.
+
+Configura MongoDB y un secreto JWT propio de al menos 32 caracteres en el
+backend. No uses la URI de ejemplo como conexión real. Usa una base exclusiva
+para pruebas y un replica set para transacciones. Nunca pongas secretos en
+variables `EXPO_PUBLIC_*`.
+
+- Web local: `EXPO_PUBLIC_API_URL=http://localhost:4000/api`.
+- Android físico: usa la IP LAN de la computadora, por ejemplo
+  `http://192.168.1.20:4000/api`; ambos equipos deben tener acceso a esa red.
+- Emulador Android Studio: normalmente `http://10.0.2.2:4000/api`.
+- Despliegue: usa la URL HTTPS real de la API, conservando el sufijo `/api`.
+
+`CLIENT_ORIGIN` debe coincidir con el origen web mostrado por Expo.
+`EXPO_PUBLIC_COMPANY_ID` es temporal: usa el ID de una empresa existente.
+No garantiza autorización; la pertenencia a empresa se corregirá en M1.
+Reinicia Expo al cambiar el entorno (`npm --workspace frontend run start -- --clear`).
+
+Comprueba `/api/health` y `/api/health/ready`: el primero verifica que el
+servicio responde; el segundo exige MongoDB disponible. Una conexión saludable
+no sustituye las pruebas autenticadas de los módulos.

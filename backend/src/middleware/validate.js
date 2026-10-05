@@ -8,7 +8,9 @@ export function validate(schema, source = 'body') {
       return next(new AppError('Datos de entrada invalidos', 400, result.error.flatten()));
     }
 
-    request[source] = result.data;
+    request.validated ??= {};
+    request.validated[source] = result.data;
+    if (source !== 'query') request[source] = result.data;
     return next();
   };
 }
