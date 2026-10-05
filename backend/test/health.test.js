@@ -155,7 +155,7 @@ test('ruta inexistente responde con error consistente', async () => {
     assert.equal(inventoryBody.message, 'Autenticacion requerida');
   });
 
-  test('transferencia exige un almacen destino', async () => {
+  test('transferencia sin token exige autenticacion antes de validar destino', async () => {
     const { port } = server.address();
     const response = await fetch(`http://localhost:${port}/api/inventory/movement`, {
       method: 'POST',

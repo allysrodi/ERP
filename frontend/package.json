@@ -2,11 +2,13 @@
   "name": "erp-frontend",
   "version": "0.1.0",
   "private": true,
-  "main": "./App.js",
+  "main": "./index.js",
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
-    "android": "expo start --android"
+    "android": "expo start --android",
+    "test": "node --test test/*.test.mjs",
+    "build:web": "expo export --platform web"
   },
   "dependencies": {
     "@expo/metro-runtime": "^6.1.2",

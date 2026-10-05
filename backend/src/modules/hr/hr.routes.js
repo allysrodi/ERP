@@ -13,8 +13,8 @@ const employee = base.extend({ name: z.string().min(1), lastName: z.string().min
 const department = base.extend({ name: z.string().min(1), description: z.string().optional(), manager: z.string().optional() });
 const router = Router(); const employees = createCompanyCrud(Employee, 'Empleado'); const departments = createCompanyCrud(Department, 'Departamento');
 router.use(requireAuth);
-router.get('/employees', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await employees.list(req.query), message: 'Empleados obtenidos correctamente' })));
+router.get('/employees', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await employees.list(req.validated.query), message: 'Empleados obtenidos correctamente' })));
 router.post('/employees', requirePermission(ACTIONS.CREATE), validate(employee), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await employees.create(req.body, req.auth.userId), message: 'Empleado creado correctamente' })));
-router.get('/departments', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await departments.list(req.query), message: 'Departamentos obtenidos correctamente' })));
+router.get('/departments', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await departments.list(req.validated.query), message: 'Departamentos obtenidos correctamente' })));
 router.post('/departments', requirePermission(ACTIONS.CREATE), validate(department), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await departments.create(req.body, req.auth.userId), message: 'Departamento creado correctamente' })));
 export default router;
