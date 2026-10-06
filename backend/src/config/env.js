@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../');
-dotenv.config({ path: resolve(projectRoot, '.env') });
+dotenv.config({ path: [resolve(projectRoot, 'backend/.env'), resolve(projectRoot, '.env')] });
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -13,6 +13,8 @@ const envSchema = z.object({
   MONGODB_URI: z.string().min(1).optional(),
   AUTH_JWT_SECRET: z.string().min(32).optional(),
   AUTH_JWT_EXPIRES_IN: z.string().default('1h'),
+  PASSWORD_RESET_URL: z.string().url().default('http://localhost:8081/reset-password'),
+  EMAIL_FROM: z.string().min(1).default('KIT-LI ERP <onboarding@resend.dev>'),
   RESEND_API_KEY: z.string().min(1).optional()
 });
 

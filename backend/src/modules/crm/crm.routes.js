@@ -12,8 +12,8 @@ const lead = base.extend({ name: z.string().min(1), email: z.string().email().op
 const opportunity = base.extend({ name: z.string().min(1), leadId: objectId.optional(), amount: z.coerce.number().nonnegative().default(0), expectedCloseDate: z.coerce.date().optional() });
 const router = Router(); const leads = createCompanyCrud(Lead, 'Lead'); const opportunities = createCompanyCrud(Opportunity, 'Oportunidad');
 router.use(requireAuth);
-router.get('/leads', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await leads.list(req.query), message: 'Leads obtenidos correctamente' })));
+router.get('/leads', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await leads.list(req.validated.query), message: 'Leads obtenidos correctamente' })));
 router.post('/leads', requirePermission(ACTIONS.CREATE), validate(lead), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await leads.create(req.body, req.auth.userId), message: 'Lead creado correctamente' })));
-router.get('/opportunities', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await opportunities.list(req.query), message: 'Oportunidades obtenidas correctamente' })));
+router.get('/opportunities', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await opportunities.list(req.validated.query), message: 'Oportunidades obtenidas correctamente' })));
 router.post('/opportunities', requirePermission(ACTIONS.CREATE), validate(opportunity), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await opportunities.create(req.body, req.auth.userId), message: 'Oportunidad creada correctamente' })));
 export default router;

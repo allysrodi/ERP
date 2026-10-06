@@ -8,9 +8,7 @@ export const registerSchema = z.object({
   lastName: z.string().trim().min(1).max(120),
   email,
   phone: z.string().trim().max(30).optional(),
-  password,
-  companyId: z.string().regex(/^[a-f\d]{24}$/i).optional(),
-  branchId: z.string().regex(/^[a-f\d]{24}$/i).optional()
+  password
 });
 
 export const loginSchema = z.object({ email, password });

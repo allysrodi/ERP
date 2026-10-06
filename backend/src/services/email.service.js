@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { AppError } from '../utils/appError.js';
 import { env } from '../config/env.js';
 
 const resend = env.RESEND_API_KEY
@@ -7,15 +8,15 @@ const resend = env.RESEND_API_KEY
 
 export async function sendPasswordResetEmail({ email, token }) {
   if (!resend) {
-    console.warn('RESEND_API_KEY no configurada. No se envio el correo.');
-    return;
+    throw new AppError('Recuperacion por correo no configurada', 503);
   }
 
-  const resetUrl =
-    `https://erp-ally.allysdii93.workers.dev/reset-password?token=${encodeURIComponent(token)}`;
+  const url = new URL(env.PASSWORD_RESET_URL);
+  url.searchParams.set('token', token);
+  const resetUrl = url.toString().replaceAll('&', '&amp;').replaceAll('\"', '&quot;');
 
   const { data, error } = await resend.emails.send({
-    from: 'KIT-LI ERP <onboarding@resend.dev>',
+    from: env.EMAIL_FROM,
     to: [email],
     subject: 'Recupera tu contraseña de KIT-LI ERP',
     html: `

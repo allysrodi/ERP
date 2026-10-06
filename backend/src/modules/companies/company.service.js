@@ -8,9 +8,9 @@ function handleDuplicate(error) {
   throw error;
 }
 
-export async function listCompanies() {
+export async function listCompanies(companyId) {
   ensureDatabaseConnection();
-  return Company.find().sort({ name: 1 }).lean();
+  return Company.find(companyId ? { _id: companyId } : {}).sort({ name: 1 }).lean();
 }
 
 export async function getCompany(id) {
