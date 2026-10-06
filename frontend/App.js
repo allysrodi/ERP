@@ -1,6 +1,22 @@
 import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { api, clearAuthToken, setAuthToken } from './src/services/api';
+
+import {
+  Image,
+  Pressable,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View
+} from 'react-native';
+
+import {
+  api,
+  clearAuthToken,
+  setAuthToken
+} from './src/services/api';
+
 import { moduleCatalog } from './src/navigation/moduleCatalog';
 
 const companyId = process.env.EXPO_PUBLIC_COMPANY_ID;
@@ -18,22 +34,106 @@ function LoginScreen({ onLogin, onForgotPassword }) {
     finally { setLoading(false); }
   }
 
-  return <SafeAreaView style={styles.safeArea}><View style={styles.authShell}>
-    <Text style={styles.eyebrow}>ERP MODULAR</Text><Text style={styles.title}>Tu operacion, en orden.</Text>
-    <Text style={styles.subtitle}>Accede al espacio de trabajo de tu empresa.</Text>
-    <TextInput autoCapitalize="none" keyboardType="email-address" placeholder="Correo" placeholderTextColor="#82918f" style={styles.input} value={email} onChangeText={setEmail} />
-    <TextInput placeholder="Contrasena" placeholderTextColor="#82918f" secureTextEntry style={styles.input} value={password} onChangeText={setPassword} />
-    {error ? <Text style={styles.error}>{error}</Text> : null}
-    <Pressable onPress={submit} style={styles.primaryButton}><Text style={styles.primaryButtonText}>{loading ? 'Accediendo...' : 'Iniciar sesion'}</Text></Pressable>
-    <Pressable
-  onPress={onForgotPassword}
-  style={styles.backButton}
->
-  <Text style={styles.backButtonText}>
-    ¿Olvidaste tu contraseña?
-  </Text>
-</Pressable>
-  </View></SafeAreaView>;
+  return (
+  <SafeAreaView style={styles.loginPage}>
+    <View style={styles.loginContainer}>
+
+      <View style={styles.loginBrandPanel}>
+        <Image
+          source={require('./assets/images/kitli-logo.png')}
+          style={styles.brandLogo}
+          resizeMode="contain"
+        />
+
+        <Text style={styles.brandTag}>KIT-LI ERP</Text>
+
+        <Text style={styles.brandTitle}>
+          Tu empresa, bajo control.
+        </Text>
+
+        <Text style={styles.brandDescription}>
+          Administra ventas, inventario, clientes y operaciones
+          desde un solo lugar.
+        </Text>
+
+        <View style={styles.brandFeatures}>
+          <Text style={styles.brandFeature}>✓ Inventario organizado</Text>
+          <Text style={styles.brandFeature}>✓ Control de ventas</Text>
+          <Text style={styles.brandFeature}>✓ Información centralizada</Text>
+        </View>
+      </View>
+
+      <View style={styles.loginFormPanel}>
+        <View style={styles.loginForm}>
+          <Text style={styles.loginEyebrow}>KIT-LI ERP</Text>
+
+          <Text style={styles.loginTitle}>
+            Bienvenido de nuevo
+          </Text>
+
+          <Text style={styles.loginSubtitle}>
+            Ingresa tus datos para acceder a tu espacio de trabajo.
+          </Text>
+
+          <Text style={styles.fieldLabel}>Correo electrónico</Text>
+
+          <TextInput
+            autoCapitalize="none"
+            keyboardType="email-address"
+            placeholder="correo@empresa.com"
+            placeholderTextColor="#9A9A96"
+            style={styles.loginInput}
+            value={email}
+            onChangeText={setEmail}
+          />
+
+          <Text style={styles.fieldLabel}>Contraseña</Text>
+
+          <TextInput
+            placeholder="Ingresa tu contraseña"
+            placeholderTextColor="#9A9A96"
+            secureTextEntry
+            style={styles.loginInput}
+            value={password}
+            onChangeText={setPassword}
+          />
+
+          {error ? (
+            <Text style={styles.loginError}>{error}</Text>
+          ) : null}
+
+          <Pressable
+            onPress={submit}
+            disabled={loading}
+            style={({ pressed }) => [
+              styles.loginButton,
+              pressed && styles.loginButtonPressed,
+              loading && styles.loginButtonDisabled
+            ]}
+          >
+            <Text style={styles.loginButtonText}>
+              {loading ? 'Accediendo...' : 'Iniciar sesión'}
+            </Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onForgotPassword}
+            style={styles.forgotButton}
+          >
+            <Text style={styles.forgotButtonText}>
+              ¿Olvidaste tu contraseña?
+            </Text>
+          </Pressable>
+
+          <Text style={styles.loginFooter}>
+            KIT-LI ERP • Gestión empresarial
+          </Text>
+        </View>
+      </View>
+
+    </View>
+  </SafeAreaView>
+);
 }
 
 function ForgotPasswordScreen({ onBack }) {
@@ -265,12 +365,356 @@ function RecordsScreen({ moduleKey }) {
 function Workspace({ user, onLogout }) {
   const [activeModule, setActiveModule] = useState('dashboard');
   const [health, setHealth] = useState('Comprobando API...');
-  useEffect(() => { api.health().then((result) => setHealth(result.data.database.connected ? 'API y MongoDB conectadas' : 'API conectada; MongoDB pendiente')).catch(() => setHealth('API no disponible')); }, []);
+
+  useEffect(() => {
+    api.health()
+      .then((result) =>
+        setHealth(
+          result.data.database.connected
+            ? 'Sistema conectado'
+            : 'Base de datos pendiente'
+        )
+      )
+      .catch(() => setHealth('API no disponible'));
+  }, []);
+
   const isRecords = ['customers', 'suppliers', 'products'].includes(activeModule);
-  return <SafeAreaView style={styles.safeArea}><View style={styles.workspace}>
-    <View style={styles.sidebar}><Text style={styles.brand}>ERP</Text>{moduleCatalog.map((item) => <Pressable key={item.key} onPress={() => setActiveModule(item.key)} style={[styles.navItem, activeModule === item.key && styles.navActive]}><Text style={styles.navText}>{item.label}</Text></Pressable>)}<Pressable onPress={onLogout} style={styles.logout}><Text style={styles.logoutText}>Cerrar sesion</Text></Pressable></View>
-    <ScrollView contentContainerStyle={styles.content}><Text style={styles.welcome}>Hola, {user?.name ?? 'usuario'}</Text><Text style={styles.connection}>{health}</Text>{isRecords ? <RecordsScreen moduleKey={activeModule} /> : <><Text style={styles.sectionTitle}>{moduleCatalog.find((item) => item.key === activeModule)?.label ?? 'Dashboard'}</Text><Text style={styles.subtitle}>Selecciona un modulo para consultar la operacion sin perder el contexto.</Text><View style={styles.metricRow}><View style={styles.metric}><Text style={styles.metricNumber}>{moduleCatalog.length}</Text><Text style={styles.metricLabel}>Modulos preparados</Text></View><View style={styles.metric}><Text style={styles.metricNumber}>REST</Text><Text style={styles.metricLabel}>Conexion por API</Text></View></View></>}</ScrollView>
-  </View></SafeAreaView>;
+
+  const currentModule =
+    moduleCatalog.find((item) => item.key === activeModule)?.label ?? 'Dashboard';
+
+  return (
+    <SafeAreaView style={styles.erpPage}>
+      <View style={styles.erpWorkspace}>
+
+        {/* SIDEBAR */}
+        <View style={styles.erpSidebar}>
+
+          <View style={styles.sidebarBrand}>
+            <Image
+              source={require('./assets/images/kitli-logo.png')}
+              style={styles.sidebarLogo}
+              resizeMode="contain"
+            />
+
+            <View>
+              <Text style={styles.sidebarBrandName}>KIT-LI</Text>
+              <Text style={styles.sidebarBrandSub}>ERP</Text>
+            </View>
+          </View>
+
+          <Text style={styles.menuLabel}>MENÚ PRINCIPAL</Text>
+
+          <ScrollView
+            style={styles.sidebarNavigation}
+            showsVerticalScrollIndicator={false}
+          >
+            {moduleCatalog.map((item) => {
+              const selected = activeModule === item.key;
+
+              return (
+                <Pressable
+                  key={item.key}
+                  onPress={() => setActiveModule(item.key)}
+                  style={[
+                    styles.erpNavItem,
+                    selected && styles.erpNavActive
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.navIndicator,
+                      selected && styles.navIndicatorActive
+                    ]}
+                  />
+
+                  <Text
+                    style={[
+                      styles.erpNavText,
+                      selected && styles.erpNavTextActive
+                    ]}
+                  >
+                    {item.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          <View style={styles.sidebarBottom}>
+            <View style={styles.sidebarUser}>
+              <View style={styles.userAvatar}>
+                <Text style={styles.userAvatarText}>
+                  {(user?.name ?? 'U').charAt(0).toUpperCase()}
+                </Text>
+              </View>
+
+              <View style={styles.sidebarUserInfo}>
+                <Text
+                  style={styles.sidebarUserName}
+                  numberOfLines={1}
+                >
+                  {user?.name ?? 'Usuario'}
+                </Text>
+
+                <Text style={styles.sidebarUserRole}>
+                  {user?.role ?? 'Usuario'}
+                </Text>
+              </View>
+            </View>
+
+            <Pressable
+              onPress={onLogout}
+              style={styles.erpLogout}
+            >
+              <Text style={styles.erpLogoutText}>
+                Cerrar sesión
+              </Text>
+            </Pressable>
+          </View>
+
+        </View>
+
+        {/* CONTENIDO */}
+        <View style={styles.erpMain}>
+
+          {/* HEADER */}
+          <View style={styles.erpHeader}>
+            <View>
+              <Text style={styles.headerSection}>
+                KIT-LI / {currentModule}
+              </Text>
+
+              <Text style={styles.headerTitle}>
+                {currentModule}
+              </Text>
+            </View>
+
+            <View style={styles.headerStatus}>
+              <View style={styles.statusDot} />
+
+              <Text style={styles.statusText}>
+                {health}
+              </Text>
+            </View>
+          </View>
+
+          <ScrollView
+            contentContainerStyle={styles.erpContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {isRecords ? (
+              <RecordsScreen moduleKey={activeModule} />
+            ) : activeModule === 'dashboard' ? (
+              <>
+                {/* BIENVENIDA */}
+                <View style={styles.dashboardWelcome}>
+                  <View>
+                    <Text style={styles.dashboardGreeting}>
+                      Hola, {user?.name ?? 'usuario'} 👋
+                    </Text>
+
+                    <Text style={styles.dashboardDescription}>
+                      Aquí tienes un resumen general de tu empresa.
+                    </Text>
+                  </View>
+
+                  <View style={styles.dashboardDateBadge}>
+                    <Text style={styles.dashboardDateText}>
+                      KIT-LI ERP
+                    </Text>
+                  </View>
+                </View>
+
+                {/* MÉTRICAS */}
+                <View style={styles.dashboardMetrics}>
+
+                  <View style={styles.dashboardCard}>
+                    <View style={styles.cardIcon}>
+                      <Text style={styles.cardIconText}>$</Text>
+                    </View>
+
+                    <Text style={styles.dashboardCardLabel}>
+                      Ventas
+                    </Text>
+
+                    <Text style={styles.dashboardCardValue}>
+                      $0.00
+                    </Text>
+
+                    <Text style={styles.dashboardCardHint}>
+                      Ventas registradas
+                    </Text>
+                  </View>
+
+                  <View style={styles.dashboardCard}>
+                    <View style={styles.cardIcon}>
+                      <Text style={styles.cardIconText}>P</Text>
+                    </View>
+
+                    <Text style={styles.dashboardCardLabel}>
+                      Productos
+                    </Text>
+
+                    <Text style={styles.dashboardCardValue}>
+                      —
+                    </Text>
+
+                    <Text style={styles.dashboardCardHint}>
+                      Productos disponibles
+                    </Text>
+                  </View>
+
+                  <View style={styles.dashboardCard}>
+                    <View style={styles.cardIcon}>
+                      <Text style={styles.cardIconText}>C</Text>
+                    </View>
+
+                    <Text style={styles.dashboardCardLabel}>
+                      Clientes
+                    </Text>
+
+                    <Text style={styles.dashboardCardValue}>
+                      —
+                    </Text>
+
+                    <Text style={styles.dashboardCardHint}>
+                      Clientes registrados
+                    </Text>
+                  </View>
+
+                  <View style={styles.dashboardCard}>
+                    <View style={styles.cardIcon}>
+                      <Text style={styles.cardIconText}>M</Text>
+                    </View>
+
+                    <Text style={styles.dashboardCardLabel}>
+                      Módulos
+                    </Text>
+
+                    <Text style={styles.dashboardCardValue}>
+                      {moduleCatalog.length}
+                    </Text>
+
+                    <Text style={styles.dashboardCardHint}>
+                      Módulos disponibles
+                    </Text>
+                  </View>
+
+                </View>
+
+                {/* PARTE INFERIOR */}
+                <View style={styles.dashboardGrid}>
+
+                  <View style={styles.dashboardPanel}>
+                    <View style={styles.panelHeader}>
+                      <View>
+                        <Text style={styles.panelTitle}>
+                          Resumen de operaciones
+                        </Text>
+
+                        <Text style={styles.panelSubtitle}>
+                          Actividad general del sistema
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.emptyChart}>
+                      <Text style={styles.emptyChartIcon}>▥</Text>
+
+                      <Text style={styles.emptyChartTitle}>
+                        Tu operación en un solo lugar
+                      </Text>
+
+                      <Text style={styles.emptyChartText}>
+                        Conforme registres ventas y movimientos,
+                        aquí podrás consultar el comportamiento de tu empresa.
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.dashboardSidePanel}>
+                    <Text style={styles.panelTitle}>
+                      Estado del sistema
+                    </Text>
+
+                    <View style={styles.systemItem}>
+                      <View style={styles.systemIcon}>
+                        <Text>✓</Text>
+                      </View>
+
+                      <View>
+                        <Text style={styles.systemItemTitle}>
+                          API REST
+                        </Text>
+                        <Text style={styles.systemItemText}>
+                          Servicio disponible
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.systemItem}>
+                      <View style={styles.systemIcon}>
+                        <Text>✓</Text>
+                      </View>
+
+                      <View>
+                        <Text style={styles.systemItemTitle}>
+                          Base de datos
+                        </Text>
+                        <Text style={styles.systemItemText}>
+                          {health}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.systemItem}>
+                      <View style={styles.systemIcon}>
+                        <Text>✓</Text>
+                      </View>
+
+                      <View>
+                        <Text style={styles.systemItemTitle}>
+                          Sesión
+                        </Text>
+                        <Text style={styles.systemItemText}>
+                          Autenticación activa
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={styles.modulePageTitle}>
+                  {currentModule}
+                </Text>
+
+                <Text style={styles.modulePageSubtitle}>
+                  Consulta y administra la operación de este módulo.
+                </Text>
+
+                <View style={styles.modulePlaceholder}>
+                  <Text style={styles.modulePlaceholderTitle}>
+                    {currentModule}
+                  </Text>
+
+                  <Text style={styles.modulePlaceholderText}>
+                    Este módulo está preparado para integrarse con
+                    las funciones correspondientes del ERP.
+                  </Text>
+                </View>
+              </>
+            )}
+          </ScrollView>
+
+        </View>
+
+      </View>
+    </SafeAreaView>
+  );
 }
 
 export default function App() {
@@ -333,6 +777,202 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
+
+  loginPage: {
+  flex: 1,
+  minHeight: '100vh',
+  backgroundColor: '#F7F5F1',
+  justifyContent: 'center',
+  padding: 24
+},
+
+loginContainer: {
+  width: '100%',
+  maxWidth: 1100,
+  minHeight: 650,
+  alignSelf: 'center',
+  flexDirection: 'row',
+  backgroundColor: '#FFFFFF',
+  borderRadius: 28,
+  overflow: 'hidden',
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  shadowColor: '#000000',
+  shadowOffset: {
+    width: 0,
+    height: 12
+  },
+  shadowOpacity: 0.08,
+  shadowRadius: 30,
+  elevation: 5
+},
+
+loginBrandPanel: {
+  flex: 1,
+  backgroundColor: '#FCE9E4',
+  padding: 54,
+  justifyContent: 'center'
+},
+
+brandLogo: {
+  width: 180,
+  height: 180,
+  marginBottom: 24
+},
+
+brandTag: {
+  color: '#E64B32',
+  fontSize: 14,
+  fontWeight: '800',
+  letterSpacing: 3,
+  marginBottom: 14
+},
+
+brandTitle: {
+  color: '#151515',
+  fontSize: 40,
+  lineHeight: 46,
+  fontWeight: '800',
+  maxWidth: 390
+},
+
+brandDescription: {
+  color: '#6F7774',
+  fontSize: 17,
+  lineHeight: 27,
+  marginTop: 18,
+  maxWidth: 410
+},
+
+brandFeatures: {
+  marginTop: 32,
+  gap: 12
+},
+
+brandFeature: {
+  color: '#333330',
+  fontSize: 15,
+  fontWeight: '600'
+},
+
+loginFormPanel: {
+  flex: 1,
+  padding: 54,
+  justifyContent: 'center',
+  backgroundColor: '#FFFFFF'
+},
+
+loginForm: {
+  width: '100%',
+  maxWidth: 420,
+  alignSelf: 'center'
+},
+
+loginEyebrow: {
+  color: '#E64B32',
+  fontSize: 13,
+  fontWeight: '800',
+  letterSpacing: 2.5,
+  marginBottom: 12
+},
+
+loginTitle: {
+  color: '#151515',
+  fontSize: 38,
+  lineHeight: 44,
+  fontWeight: '800'
+},
+
+loginSubtitle: {
+  color: '#6F7774',
+  fontSize: 16,
+  lineHeight: 24,
+  marginTop: 12,
+  marginBottom: 30
+},
+
+fieldLabel: {
+  color: '#202321',
+  fontSize: 14,
+  fontWeight: '700',
+  marginBottom: 8
+},
+
+loginInput: {
+  width: '100%',
+  minHeight: 54,
+  backgroundColor: '#FAF9F7',
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  borderRadius: 12,
+  paddingHorizontal: 16,
+  fontSize: 16,
+  color: '#202321',
+  marginBottom: 20,
+  outlineStyle: 'none'
+},
+
+loginError: {
+  color: '#C9362B',
+  fontWeight: '600',
+  marginBottom: 16
+},
+
+loginButton: {
+  width: '100%',
+  minHeight: 56,
+  backgroundColor: '#E64B32',
+  borderRadius: 12,
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginTop: 6
+},
+
+loginButtonPressed: {
+  opacity: 0.88
+},
+
+loginButtonDisabled: {
+  opacity: 0.6
+},
+
+loginButtonText: {
+  color: '#FFFFFF',
+  fontSize: 16,
+  fontWeight: '800'
+},
+
+forgotButton: {
+  alignItems: 'center',
+  paddingVertical: 16
+},
+
+forgotButtonText: {
+  color: '#E64B32',
+  fontSize: 14,
+  fontWeight: '700'
+},
+
+loginFooter: {
+  color: '#9A9A96',
+  fontSize: 12,
+  textAlign: 'center',
+  marginTop: 26
+},
+  loginLogo: {
+  width: 170,
+  height: 170,
+  alignSelf: 'center',
+  marginBottom: 12
+},
+
+  loginLogo: {
+  width: 150,
+  height: 150,
+  alignSelf: 'center',
+  marginBottom: 20
+},
+
   backButton: {
   alignItems: 'center',
   marginTop: 18,
@@ -387,5 +1027,439 @@ backButtonText: {
   recordCopy: { flex: 1 },
   recordActions: { flexDirection: 'row', gap: 16, marginTop: 12 },
   actionText: { color: '#0f766e', fontWeight: '700' },
-  dangerText: { color: '#b42318', fontWeight: '700' }
+  dangerText: { color: '#b42318', fontWeight: '700' },
+  
+erpPage: {
+  flex: 1,
+  backgroundColor: '#F7F5F1'
+},
+
+erpWorkspace: {
+  flex: 1,
+  flexDirection: 'row',
+  minHeight: '100vh'
+},
+
+erpSidebar: {
+  width: 250,
+  backgroundColor: '#FFFFFF',
+  borderRightWidth: 1,
+  borderRightColor: '#E8E4DE',
+  paddingTop: 24,
+  paddingHorizontal: 16
+},
+
+sidebarBrand: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingHorizontal: 8,
+  marginBottom: 32
+},
+
+sidebarLogo: {
+  width: 52,
+  height: 52,
+  marginRight: 10
+},
+
+sidebarBrandName: {
+  color: '#151515',
+  fontSize: 21,
+  fontWeight: '900',
+  letterSpacing: 1
+},
+
+sidebarBrandSub: {
+  color: '#E64B32',
+  fontSize: 11,
+  fontWeight: '800',
+  letterSpacing: 3
+},
+
+menuLabel: {
+  color: '#AAA7A1',
+  fontSize: 10,
+  fontWeight: '800',
+  letterSpacing: 1.5,
+  paddingHorizontal: 12,
+  marginBottom: 10
+},
+
+sidebarNavigation: {
+  flex: 1
+},
+
+erpNavItem: {
+  minHeight: 46,
+  borderRadius: 10,
+  paddingHorizontal: 12,
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 4
+},
+
+erpNavActive: {
+  backgroundColor: '#FCE9E4'
+},
+
+navIndicator: {
+  width: 4,
+  height: 20,
+  borderRadius: 4,
+  marginRight: 11,
+  backgroundColor: 'transparent'
+},
+
+navIndicatorActive: {
+  backgroundColor: '#E64B32'
+},
+
+erpNavText: {
+  color: '#686B68',
+  fontSize: 14,
+  fontWeight: '600'
+},
+
+erpNavTextActive: {
+  color: '#E64B32',
+  fontWeight: '800'
+},
+
+sidebarBottom: {
+  borderTopWidth: 1,
+  borderTopColor: '#EEEAE5',
+  paddingVertical: 18
+},
+
+sidebarUser: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  marginBottom: 14
+},
+
+userAvatar: {
+  width: 38,
+  height: 38,
+  borderRadius: 19,
+  backgroundColor: '#FCE9E4',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 10
+},
+
+userAvatarText: {
+  color: '#E64B32',
+  fontWeight: '900'
+},
+
+sidebarUserInfo: {
+  flex: 1
+},
+
+sidebarUserName: {
+  color: '#202321',
+  fontSize: 13,
+  fontWeight: '800'
+},
+
+sidebarUserRole: {
+  color: '#8D918D',
+  fontSize: 11,
+  marginTop: 2
+},
+
+erpLogout: {
+  minHeight: 40,
+  borderRadius: 9,
+  backgroundColor: '#F7F5F1',
+  alignItems: 'center',
+  justifyContent: 'center'
+},
+
+erpLogoutText: {
+  color: '#6F7774',
+  fontSize: 13,
+  fontWeight: '700'
+},
+
+erpMain: {
+  flex: 1,
+  backgroundColor: '#F7F5F1'
+},
+
+erpHeader: {
+  minHeight: 82,
+  backgroundColor: '#FFFFFF',
+  borderBottomWidth: 1,
+  borderBottomColor: '#E8E4DE',
+  paddingHorizontal: 32,
+  flexDirection: 'row',
+  alignItems: 'center',
+  justifyContent: 'space-between'
+},
+
+headerSection: {
+  color: '#9A9A96',
+  fontSize: 11,
+  fontWeight: '700',
+  textTransform: 'uppercase',
+  letterSpacing: 1
+},
+
+headerTitle: {
+  color: '#202321',
+  fontSize: 21,
+  fontWeight: '800',
+  marginTop: 3
+},
+
+headerStatus: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  backgroundColor: '#F3F8F6',
+  borderRadius: 20,
+  paddingHorizontal: 13,
+  paddingVertical: 8
+},
+
+statusDot: {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
+  backgroundColor: '#168477',
+  marginRight: 7
+},
+
+statusText: {
+  color: '#53706A',
+  fontSize: 12,
+  fontWeight: '700'
+},
+
+erpContent: {
+  padding: 32
+},
+
+dashboardWelcome: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 28
+},
+
+dashboardGreeting: {
+  color: '#202321',
+  fontSize: 28,
+  fontWeight: '900'
+},
+
+dashboardDescription: {
+  color: '#777B77',
+  fontSize: 14,
+  marginTop: 6
+},
+
+dashboardDateBadge: {
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  borderRadius: 10,
+  paddingHorizontal: 16,
+  paddingVertical: 10
+},
+
+dashboardDateText: {
+  color: '#E64B32',
+  fontSize: 12,
+  fontWeight: '800'
+},
+
+dashboardMetrics: {
+  flexDirection: 'row',
+  flexWrap: 'wrap',
+  gap: 16,
+  marginBottom: 22
+},
+
+dashboardCard: {
+  flex: 1,
+  minWidth: 190,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  padding: 20
+},
+
+cardIcon: {
+  width: 38,
+  height: 38,
+  borderRadius: 10,
+  backgroundColor: '#FCE9E4',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginBottom: 17
+},
+
+cardIconText: {
+  color: '#E64B32',
+  fontSize: 15,
+  fontWeight: '900'
+},
+
+dashboardCardLabel: {
+  color: '#777B77',
+  fontSize: 12,
+  fontWeight: '700'
+},
+
+dashboardCardValue: {
+  color: '#202321',
+  fontSize: 26,
+  fontWeight: '900',
+  marginTop: 5
+},
+
+dashboardCardHint: {
+  color: '#A1A49F',
+  fontSize: 11,
+  marginTop: 5
+},
+
+dashboardGrid: {
+  flexDirection: 'row',
+  gap: 20
+},
+
+dashboardPanel: {
+  flex: 2,
+  minHeight: 300,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  padding: 22
+},
+
+dashboardSidePanel: {
+  flex: 1,
+  minWidth: 250,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 16,
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  padding: 22
+},
+
+panelHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between'
+},
+
+panelTitle: {
+  color: '#202321',
+  fontSize: 16,
+  fontWeight: '800'
+},
+
+panelSubtitle: {
+  color: '#999D98',
+  fontSize: 12,
+  marginTop: 4
+},
+
+emptyChart: {
+  flex: 1,
+  minHeight: 220,
+  alignItems: 'center',
+  justifyContent: 'center',
+  padding: 30
+},
+
+emptyChartIcon: {
+  color: '#E64B32',
+  fontSize: 32,
+  marginBottom: 12
+},
+
+emptyChartTitle: {
+  color: '#202321',
+  fontSize: 15,
+  fontWeight: '800',
+  textAlign: 'center'
+},
+
+emptyChartText: {
+  color: '#8B8F8A',
+  fontSize: 12,
+  lineHeight: 19,
+  textAlign: 'center',
+  maxWidth: 400,
+  marginTop: 7
+},
+
+systemItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  paddingVertical: 17,
+  borderBottomWidth: 1,
+  borderBottomColor: '#F0EDE9'
+},
+
+systemIcon: {
+  width: 34,
+  height: 34,
+  borderRadius: 17,
+  backgroundColor: '#E7F4F0',
+  alignItems: 'center',
+  justifyContent: 'center',
+  marginRight: 12
+},
+
+systemItemTitle: {
+  color: '#202321',
+  fontSize: 13,
+  fontWeight: '800'
+},
+
+systemItemText: {
+  color: '#969A95',
+  fontSize: 11,
+  marginTop: 3
+},
+
+modulePageTitle: {
+  color: '#202321',
+  fontSize: 28,
+  fontWeight: '900'
+},
+
+modulePageSubtitle: {
+  color: '#777B77',
+  fontSize: 14,
+  marginTop: 6,
+  marginBottom: 24
+},
+
+modulePlaceholder: {
+  backgroundColor: '#FFFFFF',
+  borderWidth: 1,
+  borderColor: '#E8E4DE',
+  borderRadius: 16,
+  padding: 28
+},
+
+modulePlaceholderTitle: {
+  color: '#202321',
+  fontSize: 18,
+  fontWeight: '800'
+},
+
+modulePlaceholderText: {
+  color: '#777B77',
+  fontSize: 13,
+  lineHeight: 21,
+  marginTop: 7
+},
+
 });
