@@ -15,6 +15,7 @@ import { Warehouse } from '../modules/warehouses/warehouse.model.js';
 const generatedSeedPassword = crypto.randomBytes(24).toString('base64url');
 const seedPassword = process.env.SEED_PASSWORD ?? generatedSeedPassword;
 const systemId = new mongoose.Types.ObjectId();
+const existingUserEmail = process.env.SEED_EXISTING_USER_EMAIL;
 
 async function ensureUser({ email, role, companyId, branchId }) {
   let user = await User.findOne({ email });
@@ -38,6 +39,25 @@ async function seed() {
     { $setOnInsert: { address: 'Direccion Principal', phone: '5550000001', manager: 'Gerente Demo', createdBy: systemId } },
     { upsert: true, new: true, setDefaultsOnInsert: true }
   );
+
+if (existingUserEmail) {
+  const existingUser = await User.findOne({
+    email: existingUserEmail.toLowerCase().trim()
+  });
+
+  if (!existingUser) {
+    console.log('Usuario existente no encontrado; no se realizó la asociación.');
+  } else {
+    existingUser.companyId = company._id;
+    existingUser.branchId = branch._id;
+    await existingUser.save();
+
+    console.log(
+      `Usuario existente asociado correctamente a Empresa Demo: ${existingUser.name}`
+    );
+  }
+}
+
 
   const users = {};
   for (const role of Object.values(ROLES)) {

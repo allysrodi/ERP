@@ -19,7 +19,7 @@ import {
 
 import { moduleCatalog } from './src/navigation/moduleCatalog';
 
-const companyId = process.env.EXPO_PUBLIC_COMPANY_ID;
+
 
 function LoginScreen({ onLogin, onForgotPassword }) {
   const [email, setEmail] = useState('');
@@ -315,9 +315,9 @@ function ResetPasswordScreen({ token, onDone }) {
   );
 }
 
-function RecordsScreen({ moduleKey }) {
+function RecordsScreen({ moduleKey, companyId }) {
   const [records, setRecords] = useState([]);
-  const [message, setMessage] = useState('Configura EXPO_PUBLIC_COMPANY_ID para consultar datos.');
+  const [message, setMessage] = useState(companyId ? '' : 'Tu usuario no tiene una empresa asignada.');
   const [form, setForm] = useState({ name: '', email: '', phone: '', sku: '', description: '', unit: 'pieza', purchasePrice: '0', salePrice: '0', categoryId: '' });
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState(null);
@@ -326,11 +326,13 @@ function RecordsScreen({ moduleKey }) {
   useEffect(() => {
     if (!companyId) return;
     endpoint({ companyId, page: '1', limit: '20' }).then((result) => { setRecords(result.data.items ?? []); setMessage(''); }).catch((error) => setMessage(error.message));
-  }, [endpoint]);
+  }, [endpoint, companyId]);
 
   function updateField(field, value) { setForm((current) => ({ ...current, [field]: value })); }
   async function createRecord() {
-    if (!companyId) return setMessage('Configura EXPO_PUBLIC_COMPANY_ID antes de crear registros.');
+    if (!companyId) {
+  return setMessage('Tu usuario no tiene una empresa asignada.');
+    }
     setSaving(true); setMessage('');
     try {
       const payload = moduleKey === 'products'
@@ -349,7 +351,9 @@ function RecordsScreen({ moduleKey }) {
   }
 
   async function deactivateRecord(record) {
-    if (!companyId) return setMessage('Configura EXPO_PUBLIC_COMPANY_ID antes de desactivar registros.');
+    if (!companyId) {
+  return setMessage('Tu usuario no tiene una empresa asignada.');
+}
     try { const deactivate = moduleKey === 'customers' ? api.deactivateCustomer : moduleKey === 'suppliers' ? api.deactivateSupplier : api.deactivateProduct; const result = await deactivate(record._id, companyId); setRecords((current) => current.map((item) => item._id === record._id ? result.data : item)); setMessage('Registro desactivado correctamente.'); } catch (error) { setMessage(error.message); }
   }
 
@@ -504,7 +508,9 @@ function Workspace({ user, onLogout }) {
             showsVerticalScrollIndicator={false}
           >
             {isRecords ? (
-              <RecordsScreen moduleKey={activeModule} />
+              <RecordsScreen
+                   moduleKey={activeModule}
+                  companyId={user?.companyId}/>
             ) : activeModule === 'dashboard' ? (
               <>
                 {/* BIENVENIDA */}
@@ -734,6 +740,7 @@ export default function App() {
     ) {
       setResetToken(token);
     }
+  
   }, []);
 
   function logout() {

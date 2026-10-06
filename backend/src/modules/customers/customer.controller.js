@@ -2,7 +2,11 @@ import { sendSuccess } from '../../utils/apiResponse.js';
 import { createCustomer, deactivateCustomer, getCustomer, listCustomers, updateCustomer } from './customer.service.js';
 
 export async function getCustomers(request, response) {
-  return sendSuccess(response, await listCustomers(request.query), 'Clientes obtenidos correctamente');
+  return sendSuccess(
+    response,
+    await listCustomers(request.validated?.query ?? request.query),
+    'Clientes obtenidos correctamente'
+  );
 }
 
 export async function getCustomerById(request, response) {

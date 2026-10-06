@@ -5,10 +5,24 @@ export function validate(schema, source = 'body') {
     const result = schema.safeParse(request[source]);
 
     if (!result.success) {
-      return next(new AppError('Datos de entrada invalidos', 400, result.error.flatten()));
+      return next(
+        new AppError(
+          'Datos de entrada invalidos',
+          400,
+          result.error.flatten()
+        )
+      );
     }
 
-    request[source] = result.data;
+    request.validated ??= {};
+    request.validated[source] = result.data;
+
+    // body y params sí pueden actualizarse normalmente.
+    // query en Express 5 es de solo lectura.
+    if (source !== 'query') {
+      request[source] = result.data;
+    }
+
     return next();
   };
 }
