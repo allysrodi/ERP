@@ -12,8 +12,34 @@ const project = base.extend({ name: z.string().min(1), description: z.string().o
 const task = base.extend({ projectId: objectId, title: z.string().min(1), description: z.string().optional(), assigneeId: objectId.optional(), dueDate: z.coerce.date().optional(), priority: z.enum(['LOW', 'MEDIUM', 'HIGH']).default('MEDIUM') });
 const router = Router(); const projects = createCompanyCrud(Project, 'Proyecto'); const tasks = createCompanyCrud(Task, 'Tarea');
 router.use(requireAuth);
-router.get('/', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await projects.list(req.query), message: 'Proyectos obtenidos correctamente' })));
+router.get(
+  '/',
+  requirePermission(ACTIONS.VIEW),
+  validate(base, 'query'),
+  asyncHandler(async (req, res) => {
+    const query = req.validated?.query ?? req.query;
+
+    return res.json({
+      success: true,
+      data: await projects.list(query),
+      message: 'Proyectos obtenidos correctamente'
+    });
+  })
+);
 router.post('/', requirePermission(ACTIONS.CREATE), validate(project), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await projects.create(req.body, req.auth.userId), message: 'Proyecto creado correctamente' })));
-router.get('/tasks', requirePermission(ACTIONS.VIEW), validate(base, 'query'), asyncHandler(async (req, res) => res.json({ success: true, data: await tasks.list(req.query), message: 'Tareas obtenidas correctamente' })));
+router.get(
+  '/tasks',
+  requirePermission(ACTIONS.VIEW),
+  validate(base, 'query'),
+  asyncHandler(async (req, res) => {
+    const query = req.validated?.query ?? req.query;
+
+    return res.json({
+      success: true,
+      data: await tasks.list(query),
+      message: 'Tareas obtenidas correctamente'
+    });
+  })
+);
 router.post('/tasks', requirePermission(ACTIONS.CREATE), validate(task), asyncHandler(async (req, res) => res.status(201).json({ success: true, data: await tasks.create(req.body, req.auth.userId), message: 'Tarea creada correctamente' })));
 export default router;
