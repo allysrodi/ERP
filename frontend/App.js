@@ -2962,9 +2962,23 @@ function Workspace({ user, onLogout }) {
                 </View>
 
                 {/* PARTE INFERIOR */}
-                <View style={styles.dashboardGrid}>
+                <View
+  style={[
+    styles.dashboardGrid,
+    Platform.OS !== 'web' && styles.dashboardGridMobile
+  ]}
+>
+          
 
-                  <View style={styles.dashboardPanel}>
+
+
+
+                  <View
+  style={[
+    styles.dashboardPanel,
+    Platform.OS !== 'web' && styles.dashboardPanelMobile
+  ]}
+>
                     <View style={styles.panelHeader}>
                       <View>
                         <Text style={styles.panelTitle}>
@@ -2991,7 +3005,12 @@ function Workspace({ user, onLogout }) {
                     </View>
                   </View>
 
-                  <View style={styles.dashboardSidePanel}>
+                  <View
+  style={[
+    styles.dashboardSidePanel,
+    Platform.OS !== 'web' && styles.dashboardSidePanelMobile
+  ]}
+>
                     <Text style={styles.panelTitle}>
                       Estado del sistema
                     </Text>
@@ -3531,8 +3550,11 @@ erpNavItemMobile: {
 
 
 sidebarNavigationMobile: {
+  flex: 0,
   flexGrow: 0,
-  flexDirection: 'row',
+  width: '100%',
+  height: 54,
+  maxHeight: 54,
 },
 
 
@@ -3694,12 +3716,14 @@ erpWorkspaceMobile: {
 
 erpSidebarMobile: {
   width: '100%',
-  maxHeight: 210,
+  flexShrink: 0,
+  maxHeight: undefined,
   borderRightWidth: 0,
   borderBottomWidth: 1,
   borderBottomColor: '#E8E4DE',
   paddingTop: 10,
   paddingHorizontal: 12,
+  paddingBottom: 8,
 },
 
 erpMainMobile: {
@@ -4179,7 +4203,15 @@ saleModalDivider: {
   backgroundColor: '#E8E4DE',
   marginVertical: 20
 },
+dashboardPanelMobile: {
+  flex: 0,
+  width: '100%',
+},
 
+dashboardSidePanelMobile: {
+  flex: 0,
+  width: '100%',
+},
 
 
 
